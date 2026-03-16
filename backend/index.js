@@ -10,26 +10,56 @@ import loopRouter from "./routes/loop.routes.js"
 import storyRouter from "./routes/story.routes.js"
 import messageRouter from "./routes/message.routes.js"
 import { app, server } from "./socket.js"
+
 dotenv.config()
 
-const port=process.env.PORT || 5000
+const port = process.env.PORT || 5000
+
+// ─── Middleware ───────────────────────────────────────────
 app.use(cors({
-    origin:"http://localhost:5173",
-    credentials:true
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    credentials: true
 }))
-app.use(express.json())
+app.use(express.json({ limit: "10mb" }))         // Support larger payloads (images etc.)
+app.use(express.urlencoded({ extended: true }))  // Support URL-encoded bodies
 app.use(cookieParser())
 
-app.use("/api/auth",authRouter)
-app.use("/api/user",userRouter)
-app.use("/api/post",postRouter)
-app.use("/api/loop",loopRouter)
-app.use("/api/story",storyRouter)
-app.use("/api/message",messageRouter)
+// ─── Routes ───────────────────────────────────────────────
+app.use("/api/auth", authRouter)
+app.use("/api/user", userRouter)
+app.use("/api/post", postRouter)
+app.use("/api/loop", loopRouter)
+app.use("/api/story", storyRouter)
+app.use("/api/message", messageRouter)
 
-
-server.listen(port , ()=>{
-    connectDb()
-    console.log("server started")
+// ─── Health Check ─────────────────────────────────────────
+app.get("/health", (req, res) => {
+    res.status(200).json({
+        status: "OK",
+        message: "LinkUp server is running 🚀",
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString()
+    })
 })
 
+// ─── 404 Handler ──────────────────────────────────────────
+app.use((req, res) => {
+    res.status(404).json({ message: `Route ${req.originalUrl} not found` })
+})
+
+// ─── Global Error Handler ─────────────────────────────────
+app.use((err, req, res, next) => {
+    console.error(`❌ Error: ${err.message}`)
+    const statusCode = err.statusCode || 500
+    res.status(statusCode).json({
+        message: err.message || "Internal Server Error",
+        stack: process.env.NODE_ENV === "development" ? err.stack : undefined
+    })
+})
+
+// ─── Start Server ─────────────────────────────────────────
+server.listen(port, async () => {
+    await connectDb()
+    console.log(`✅ Server running on port ${port}`)
+    console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`)
+})
