@@ -1,14 +1,28 @@
 {
-  "name": "backend",
-  "version": "1.0.0",
-  "description": "",
+  "name": "linkup-backend",
+  "version": "1.1.0",
+  "description": "LinkUp - Social Media App Backend | REST API + Socket.io",
   "license": "ISC",
-  "author": "",
+  "author": "Chinmaya Kagolli",
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "start": "node index.js",
+    "lint": "eslint .",
+    "debug": "nodemon --inspect index.js"
   },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "linkup",
+    "social-media",
+    "express",
+    "socket.io",
+    "mongodb",
+    "rest-api"
+  ],
   "dependencies": {
     "bcryptjs": "^3.0.2",
     "cloudinary": "^2.7.0",
