@@ -1,37 +1,62 @@
 import http from "http"
 import express from "express"
 import { Server } from "socket.io"
-const app=express()
-const server=http.createServer(app)
 
-const io=new Server(server,{
-    cors:{
-        origin:"http://localhost:5173",
-        methods:["GET","POST"]
-    }
+const app = express()
+const server = http.createServer(app)
+
+const io = new Server(server, {
+    cors: {
+        origin: "http://localhost:5173",
+        methods: ["GET", "POST"]
+    },
+    pingTimeout: 60000,      // Close connection if no response in 60s
+    pingInterval: 25000,     // Check connection every 25s
 })
 
-const userSocketMap={}
+const userSocketMap = {}
 
-export const getSocketId=(receiverId)=>{
-return userSocketMap[receiverId]
+export const getSocketId = (receiverId) => {
+    return userSocketMap[receiverId]
 }
 
-io.on("connection",(socket)=>{
-   const userId=socket.handshake.query.userId
-   if(userId!=undefined){
-    userSocketMap[userId]=socket.id
-   }
+io.on("connection", (socket) => {
+    const userId = socket.handshake.query.userId
 
- io.emit('getOnlineUsers',Object.keys(userSocketMap))  
+    if (userId && userId !== "undefined") {
+        userSocketMap[userId] = socket.id
+        console.log(`✅ User connected: ${userId} → socket: ${socket.id}`)
+    }
 
+    // Emit updated online users to everyone
+    io.emit("getOnlineUsers", Object.keys(userSocketMap))
 
-socket.on('disconnect',()=>{
-    delete userSocketMap[userId]
-     io.emit('getOnlineUsers',Object.keys(userSocketMap))  
+    // Handle typing indicator
+    socket.on("typing", ({ receiverId }) => {
+        const receiverSocketId = getSocketId(receiverId)
+        if (receiverSocketId) {
+            io.to(receiverSocketId).emit("typing", { senderId: userId })
+        }
+    })
+
+    socket.on("stopTyping", ({ receiverId }) => {
+        const receiverSocketId = getSocketId(receiverId)
+        if (receiverSocketId) {
+            io.to(receiverSocketId).emit("stopTyping", { senderId: userId })
+        }
+    })
+
+    socket.on("disconnect", () => {
+        if (userId) {
+            delete userSocketMap[userId]
+            console.log(`❌ User disconnected: ${userId}`)
+        }
+        io.emit("getOnlineUsers", Object.keys(userSocketMap))
+    })
+
+    socket.on("error", (err) => {
+        console.error(`Socket error for user ${userId}:`, err.message)
+    })
 })
 
-})
-
-
-export {app,io, server}
+export { app, io, server }
