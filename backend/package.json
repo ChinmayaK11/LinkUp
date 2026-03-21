@@ -1,7 +1,7 @@
 {
   "name": "linkup-backend",
-  "version": "1.1.0",
-  "description": "LinkUp - Social Media App Backend | REST API + Socket.io",
+  "version": "1.2.0",
+  "description": "LinkUp Social Media App — REST API + Real-time Socket.io Server",
   "license": "ISC",
   "author": "Chinmaya Kagolli",
   "type": "module",
@@ -9,8 +9,9 @@
   "scripts": {
     "dev": "nodemon index.js",
     "start": "node index.js",
+    "debug": "nodemon --inspect index.js",
     "lint": "eslint .",
-    "debug": "nodemon --inspect index.js"
+    "health": "curl http://localhost:5000/health"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -21,7 +22,9 @@
     "express",
     "socket.io",
     "mongodb",
-    "rest-api"
+    "rest-api",
+    "real-time",
+    "messaging"
   ],
   "dependencies": {
     "bcryptjs": "^3.0.2",
