@@ -7,11 +7,12 @@ const server = http.createServer(app)
 
 const io = new Server(server, {
     cors: {
-        origin: "http://localhost:5173",
+        origin: process.env.CLIENT_URL || "http://localhost:5173",
         methods: ["GET", "POST"]
     },
-    pingTimeout: 60000,      // Close connection if no response in 60s
-    pingInterval: 25000,     // Check connection every 25s
+    pingTimeout: 60000,
+    pingInterval: 25000,
+    maxHttpBufferSize: 1e6  // 1MB max message size
 })
 
 const userSocketMap = {}
@@ -20,12 +21,17 @@ export const getSocketId = (receiverId) => {
     return userSocketMap[receiverId]
 }
 
+export const getOnlineUsers = () => {
+    return Object.keys(userSocketMap)
+}
+
 io.on("connection", (socket) => {
     const userId = socket.handshake.query.userId
 
     if (userId && userId !== "undefined") {
         userSocketMap[userId] = socket.id
         console.log(`✅ User connected: ${userId} → socket: ${socket.id}`)
+        console.log(`📊 Online users: ${Object.keys(userSocketMap).length}`)
     }
 
     // Emit updated online users to everyone
@@ -46,16 +52,37 @@ io.on("connection", (socket) => {
         }
     })
 
+    // Handle message read receipts
+    socket.on("messageRead", ({ senderId, messageId }) => {
+        const senderSocketId = getSocketId(senderId)
+        if (senderSocketId) {
+            io.to(senderSocketId).emit("messageRead", { messageId, readBy: userId })
+        }
+    })
+
+    // Handle user joining a room
+    socket.on("joinRoom", (roomId) => {
+        socket.join(roomId)
+        console.log(`👥 User ${userId} joined room: ${roomId}`)
+    })
+
+    // Handle user leaving a room
+    socket.on("leaveRoom", (roomId) => {
+        socket.leave(roomId)
+        console.log(`🚪 User ${userId} left room: ${roomId}`)
+    })
+
     socket.on("disconnect", () => {
         if (userId) {
             delete userSocketMap[userId]
             console.log(`❌ User disconnected: ${userId}`)
+            console.log(`📊 Online users: ${Object.keys(userSocketMap).length}`)
         }
         io.emit("getOnlineUsers", Object.keys(userSocketMap))
     })
 
     socket.on("error", (err) => {
-        console.error(`Socket error for user ${userId}:`, err.message)
+        console.error(`⚠️ Socket error for user ${userId}:`, err.message)
     })
 })
 
