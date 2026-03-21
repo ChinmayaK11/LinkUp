@@ -15,13 +15,23 @@ dotenv.config()
 
 const port = process.env.PORT || 5000
 
+// ─── Request Logger ───────────────────────────────────────
+app.use((req, res, next) => {
+    const start = Date.now()
+    res.on("finish", () => {
+        const duration = Date.now() - start
+        console.log(`${req.method} ${req.originalUrl} → ${res.statusCode} (${duration}ms)`)
+    })
+    next()
+})
+
 // ─── Middleware ───────────────────────────────────────────
 app.use(cors({
     origin: process.env.CLIENT_URL || "http://localhost:5173",
     credentials: true
 }))
-app.use(express.json({ limit: "10mb" }))         // Support larger payloads (images etc.)
-app.use(express.urlencoded({ extended: true }))  // Support URL-encoded bodies
+app.use(express.json({ limit: "10mb" }))
+app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
 
 // ─── Routes ───────────────────────────────────────────────
@@ -37,21 +47,26 @@ app.get("/health", (req, res) => {
     res.status(200).json({
         status: "OK",
         message: "LinkUp server is running 🚀",
-        uptime: process.uptime(),
-        timestamp: new Date().toISOString()
+        uptime: `${Math.floor(process.uptime())}s`,
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || "development"
     })
 })
 
 // ─── 404 Handler ──────────────────────────────────────────
 app.use((req, res) => {
-    res.status(404).json({ message: `Route ${req.originalUrl} not found` })
+    res.status(404).json({ 
+        success: false,
+        message: `Route ${req.originalUrl} not found` 
+    })
 })
 
 // ─── Global Error Handler ─────────────────────────────────
 app.use((err, req, res, next) => {
-    console.error(`❌ Error: ${err.message}`)
+    console.error(`❌ [${new Date().toISOString()}] Error: ${err.message}`)
     const statusCode = err.statusCode || 500
     res.status(statusCode).json({
+        success: false,
         message: err.message || "Internal Server Error",
         stack: process.env.NODE_ENV === "development" ? err.stack : undefined
     })
@@ -62,4 +77,5 @@ server.listen(port, async () => {
     await connectDb()
     console.log(`✅ Server running on port ${port}`)
     console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`)
+    console.log(`🔗 Health check: http://localhost:${port}/health`)
 })
