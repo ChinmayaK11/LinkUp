@@ -28,7 +28,6 @@ export default defineConfig([
       'no-undef': 'error',
       'no-console': 'off',
 
-      // Code quality
       'no-duplicate-imports': 'error',
       'no-empty': 'warn',
       'no-extra-semi': 'warn',
@@ -39,7 +38,7 @@ export default defineConfig([
       'react-hooks/exhaustive-deps': 'warn',
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
 
-      // Best practices
+      
       'eqeqeq': ['warn', 'always'],
       'prefer-const': 'warn',
       'no-var': 'error',
