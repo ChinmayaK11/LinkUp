@@ -70,14 +70,13 @@ app.use("/api/message", messageRouter)
 app.get("/health", (req, res) => {
     res.status(200).json({
         status: "OK",
-        message: "LinkUp server is running 🚀",
+        message: "LinkUp server is running smoothly!",
         uptime: `${Math.floor(process.uptime())}s`,
         timestamp: new Date().toISOString(),
         environment: process.env.NODE_ENV || "development"
     })
 })
 
-// ─── 404 Handler ──────────────────────────────────────────
 app.use((req, res) => {
     res.status(404).json({ 
         success: false,
