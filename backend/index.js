@@ -27,7 +27,7 @@ app.use((req, res, next) => {
 
 
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
+    windowMs: 15 * 60 * 1000, // 25 minutes 
     max: 100,                  
     standardHeaders: true,
     legacyHeaders: false,
@@ -39,7 +39,7 @@ const limiter = rateLimit({
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 10, // stricter limit for auth routes
+    max: 10, // stricter limit for auth routes a well as to prevent brute-force attacks to login endpoint and registartion endpoint 
     standardHeaders: true,
     legacyHeaders: false,
     message: {
