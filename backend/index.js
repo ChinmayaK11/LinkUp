@@ -66,7 +66,7 @@ app.use("/api/loop", loopRouter)
 app.use("/api/story", storyRouter)
 app.use("/api/message", messageRouter)
 
-// ─── Health Check ─────────────────────────────────────────
+// ───Health Check─────────────────────────────────────────
 app.get("/health", (req, res) => {
     res.status(200).json({
         status: "OK",
@@ -86,7 +86,7 @@ app.use((req, res) => {
 
 // ─── Global Error Handler ─────────────────────────────────
 app.use((err, req, res, next) => {
-    console.error(`❌ [${new Date().toISOString()}] Error: ${err.message}`)
+    console.error(`[${new Date().toISOString()}] Error: ${err.message}`)
     const statusCode = err.statusCode || 500
     res.status(statusCode).json({
         success: false,
